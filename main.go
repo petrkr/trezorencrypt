@@ -156,9 +156,9 @@ func main() {
 
 	switch typed := res.(type) {
 	case *trezorpb.Features:
-		fmt.Printf("Device ID: %s\n", *typed.DeviceId)
+		fmt.Fprintf(os.Stderr, "Device ID: %s (%s)\n", *typed.DeviceId, *typed.Label)
 	default:
-		fmt.Println("Unknown type.")
+		fmt.Fprintln(os.Stderr, "Unknown type.")
 	}
 
 	value := []byte("TEST VALUE")
