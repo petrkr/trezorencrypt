@@ -173,7 +173,8 @@ func main() {
 			Value:        paddedValue,
 			Encrypt:      makeBoolPointer(true),
 			AskOnDecrypt: makeBoolPointer(true),
-			AskOnEncrypt: makeBoolPointer(true)},
+			AskOnEncrypt: makeBoolPointer(true),
+		},
 		session,
 		debugLink,
 	)
