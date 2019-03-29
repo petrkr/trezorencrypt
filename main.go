@@ -185,7 +185,7 @@ func main() {
 
 	switch data := res.(type) {
 	case *trezorpb.CipheredKeyValue:
-		fmt.Printf("Data: %s", string(data.Value))
+		fmt.Printf(string(data.Value))
 	case *trezorpb.Failure:
 		fmt.Printf("Failure: %s\n", *data.Message)
 	default:
