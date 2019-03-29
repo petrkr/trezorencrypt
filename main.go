@@ -74,7 +74,12 @@ func trezorCall(
 		cmd.Stdin = os.Stdin
 		cmd.Stderr = os.Stderr
 
-		out, _ := cmd.Output()
+		out, err := cmd.Output()
+
+		if err != nil {
+			panic(err)
+		}
+
 		pin := string(out)
 
 		return trezorCall(ctx, api, &trezorpb.PinMatrixAck{Pin: &pin}, session, debugLink)
