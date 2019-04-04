@@ -123,7 +123,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	trezorAPI, err := trezorapi.New(trezorapi.AddUDPPort(21324))
+	trezorAPI, err := trezorapi.New()
 	if err != nil {
 		panic(err)
 	}
