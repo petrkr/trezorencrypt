@@ -17,6 +17,8 @@ package main
 
 import (
 	"context"
+	"encoding/hex"
+	"flag"
 	"fmt"
 	"math"
 	"os"
@@ -24,7 +26,6 @@ import (
 	"syscall"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/pborman/getopt/v2"
 	"github.com/trezor/trezord-go/trezorapi"
 	"github.com/trezor/trezord-go/trezorapi/trezorpb"
 	"github.com/trezor/trezord-go/trezorapi/trezorpb/trezorpbcall"
@@ -35,7 +36,7 @@ var (
 )
 
 func usage() int {
-	getopt.Usage()
+	flag.Usage()
 	return int(syscall.EINVAL)
 }
 
@@ -106,12 +107,19 @@ func trezorCall(
 	return res, err
 }
 
+var (
+	hexInParam   = flag.Bool("Hi", false, "HEX encoded input")
+	hexOutParam  = flag.Bool("Ho", false, "HEX encoded output")
+	encryptParam = flag.Bool("e", false, "Encrypt value (default decrypt)")
+	helpParam    = flag.Bool("h", false, "Show help message")
+	keyParam     = flag.String("k", "default key", "Sets TREZOR encryption/decryption key")
+	valueParam   = flag.String("v", "", "Value to encrypt (default TREZOR_CIPHER_VALUE variable) or stdin")
+)
+
 func main() {
-	helpFlag := getopt.BoolLong("help", 'h', "print help message")
+	flag.Parse()
 
-	getopt.Parse()
-
-	if *helpFlag {
+	if *helpParam {
 		usage()
 		os.Exit(0)
 	}
@@ -169,9 +177,9 @@ func main() {
 		context.Background(),
 		trezorAPI,
 		&trezorpb.CipherKeyValue{
-			Key:          makeStringPointer("TEST KEY"),
+			Key:          keyParam,
 			Value:        paddedValue,
-			Encrypt:      makeBoolPointer(true),
+			Encrypt:      encryptParam,
 			AskOnDecrypt: makeBoolPointer(true),
 			AskOnEncrypt: makeBoolPointer(true),
 		},
@@ -185,7 +193,11 @@ func main() {
 
 	switch data := res.(type) {
 	case *trezorpb.CipheredKeyValue:
-		fmt.Printf(string(data.Value))
+		if *hexOutParam {
+			data.Value = []byte(hex.EncodeToString(data.Value))
+		}
+
+		fmt.Print(string(data.Value))
 	case *trezorpb.Failure:
 		fmt.Printf("Failure: %s\n", *data.Message)
 	default:
