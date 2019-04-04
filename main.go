@@ -112,7 +112,7 @@ var (
 	encryptParam = flag.Bool("e", false, "Encrypt value (default decrypt)")
 	helpParam    = flag.Bool("h", false, "Show help message")
 	keyParam     = flag.String("k", "default key", "Sets TREZOR encryption/decryption key")
-	valueParam   = flag.String("v", "", "Value to encrypt (default TREZOR_CIPHER_VALUE variable) or stdin")
+	valueParam   = flag.String("v", "", "Value to encrypt (default TREZOR_CIPHER_VALUE variable)")
 )
 
 func main() {
@@ -173,9 +173,37 @@ func main() {
 		fmt.Fprintln(os.Stderr, "Unknown type.")
 	}
 
-	value := []byte("TEST VALUE")
-	paddedValue := make([]byte, 16*int(math.Ceil(float64(len(value))/16)))
-	copy(paddedValue, value)
+	var value []byte
+
+	// Try get Value from environment
+	if len(*valueParam) == 0 {
+		value = []byte(os.Getenv("TREZOR_CIPHER_VALUE"))
+	} else {
+		value = []byte(*valueParam)
+	}
+
+	if len(value) == 0 {
+		fmt.Fprintln(os.Stderr, "No value specified! Use eighter environment TREZOR_CIPHER_VALUE or -v param")
+	}
+
+	if *hexInParam {
+		value, _ = hex.DecodeString(string(value))
+	}
+
+	if !*encryptParam {
+		if *hexInParam {
+			if len(value)%2 != 0 {
+				panic("Value is not valid HEX data")
+			}
+
+			hex.Decode(value, value)
+		}
+	}
+
+	valueByte := value
+
+	paddedValue := make([]byte, 16*int(math.Ceil(float64(len(valueByte))/16)))
+	copy(paddedValue, valueByte)
 
 	res, err = trezorCall(
 		context.Background(),
