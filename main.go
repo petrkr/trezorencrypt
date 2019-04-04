@@ -163,6 +163,11 @@ func main() {
 
 	switch typed := res.(type) {
 	case *trezorpb.Features:
+		if typed.BootloaderMode != nil && *typed.BootloaderMode {
+			fmt.Fprintf(os.Stderr, "Device is in bootloader mode\n")
+			os.Exit(3)
+		}
+
 		fmt.Fprintf(os.Stderr, "Device ID: %s (%s)\n", *typed.DeviceId, *typed.Label)
 	default:
 		fmt.Fprintln(os.Stderr, "Unknown type.")
