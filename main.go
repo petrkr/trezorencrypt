@@ -70,8 +70,7 @@ func trezorCall(
 		return trezorCall(ctx, api, &trezorpb.ButtonAck{}, session, debugLink)
 
 	case *trezorpb.PinMatrixRequest:
-		fmt.Println("PIN Request")
-		cmd := exec.Command("trezor-askpass", "PIN")
+		cmd := exec.Command("trezor-askpass", "PIN:")
 		cmd.Stdin = os.Stdin
 		cmd.Stderr = os.Stderr
 
@@ -91,7 +90,7 @@ func trezorCall(
 			return trezorCall(ctx, api, &trezorpb.PassphraseAck{Passphrase: nil}, session, debugLink)
 		}
 
-		cmd := exec.Command("trezor-askpass", "Passphrase")
+		cmd := exec.Command("trezor-askpass", "Passphrase:")
 		cmd.Stdin = os.Stdin
 		cmd.Stderr = os.Stderr
 
