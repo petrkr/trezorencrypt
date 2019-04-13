@@ -44,8 +44,9 @@ func checkError(err error) {
 	if err == nil {
 		return
 	}
+
 	fmt.Fprintln(os.Stderr, "Got error:", err)
-	os.Exit(-1)
+	os.Exit(255)
 }
 
 func makeStringPointer(v string) *string {
@@ -76,9 +77,7 @@ func trezorCall(
 
 		out, err := cmd.Output()
 
-		if err != nil {
-			panic(err)
-		}
+		checkError(err)
 
 		pin := string(out)
 
@@ -94,7 +93,10 @@ func trezorCall(
 		cmd.Stdin = os.Stdin
 		cmd.Stderr = os.Stderr
 
-		out, _ := cmd.Output()
+		out, err := cmd.Output()
+
+		checkError(err)
+
 		pass := string(out)
 
 		return trezorCall(ctx, api, &trezorpb.PassphraseAck{Passphrase: &pass}, session, debugLink)
@@ -124,15 +126,11 @@ func main() {
 	}
 
 	trezorAPI, err := trezorapi.New()
-	if err != nil {
-		panic(err)
-	}
+	checkError(err)
 
 	// enumerating
 	ds, err := trezorAPI.Enumerate()
-	if err != nil {
-		panic(err)
-	}
+	checkError(err)
 
 	if len(ds) < 1 {
 		fmt.Fprintln(os.Stderr, "No TREZOR device(s) found")
@@ -144,9 +142,7 @@ func main() {
 	// acquiring
 	debugLink := false
 	session, err := trezorAPI.Acquire(d.Path, d.Session, debugLink)
-	if err != nil {
-		panic(err)
-	}
+	checkError(err)
 
 	// calling, automatically marshaling/demarshaling PB messages
 	res, err := trezorCall(
@@ -156,16 +152,16 @@ func main() {
 		session,
 		debugLink,
 	)
-
-	if err != nil {
-		panic(err)
-	}
+	checkError(err)
 
 	switch typed := res.(type) {
 	case *trezorpb.Features:
 		if typed.BootloaderMode != nil && *typed.BootloaderMode {
 			fmt.Fprintf(os.Stderr, "Device is in bootloader mode\n")
-			os.Exit(3)
+
+			// releasing
+			err = trezorAPI.Release(session, debugLink)
+			checkError(err)
 		}
 
 		fmt.Fprintf(os.Stderr, "Device ID: %s (%s)\n", *typed.DeviceId, *typed.Label)
@@ -184,6 +180,14 @@ func main() {
 
 	if len(value) == 0 {
 		fmt.Fprintln(os.Stderr, "No value specified! Use eighter environment TREZOR_CIPHER_VALUE or -v param")
+
+		// releasing
+		err = trezorAPI.Release(session, debugLink)
+		if err != nil {
+			panic(err)
+		}
+
+		os.Exit(1)
 	}
 
 	if *hexInParam {
@@ -218,10 +222,7 @@ func main() {
 		session,
 		debugLink,
 	)
-
-	if err != nil {
-		panic(err)
-	}
+	checkError(err)
 
 	switch data := res.(type) {
 	case *trezorpb.CipheredKeyValue:
@@ -238,7 +239,5 @@ func main() {
 
 	// releasing
 	err = trezorAPI.Release(session, debugLink)
-	if err != nil {
-		panic(err)
-	}
+	checkError(err)
 }
