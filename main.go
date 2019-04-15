@@ -232,9 +232,15 @@ func main() {
 
 		fmt.Print(string(data.Value))
 	case *trezorpb.Failure:
-		fmt.Printf("Failure: %s\n", *data.Message)
+		fmt.Fprintf(os.Stderr, "Failure: %s\n", *data.Message)
+		err = trezorAPI.Release(session, debugLink)
+		checkError(err)
+		os.Exit(2)
 	default:
-		fmt.Println("Unknown type.")
+		fmt.Fprintf(os.Stderr, "Unknown type.")
+		err = trezorAPI.Release(session, debugLink)
+		checkError(err)
+		os.Exit(254)
 	}
 
 	// releasing
