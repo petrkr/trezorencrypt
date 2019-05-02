@@ -164,7 +164,13 @@ func main() {
 			checkError(err)
 		}
 
-		fmt.Fprintf(os.Stderr, "Device ID: %s (%s)\n", *typed.DeviceId, *typed.Label)
+		label := "TREZOR"
+
+		if typed.Label != nil {
+			label = *typed.Label
+		}
+
+		fmt.Fprintf(os.Stderr, "Device ID: %s (%s)\n", *typed.DeviceId, label)
 	default:
 		fmt.Fprintln(os.Stderr, "Unknown type.")
 	}
